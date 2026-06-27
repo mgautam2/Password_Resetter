@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "URL Opener",
+  "version": "1.0",
+  "description": "Open URLs in new tabs",
+  "permissions": ["tabs", "scripting", "activeTab", "sidePanel"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_title": "Open URL"
+  },
+  "side_panel": {
+    "default_path": "dist/src/popup/index.html"
+  },
+  "background": {
+    "service_worker": "dist/background.js"
+  }
+}
