@@ -14,6 +14,7 @@ const socket = io(BACKEND_URL, { autoConnect: false, transports: ['websocket'] }
 // ── socket lifecycle ─────────────────────────────────────────────────────────
 
 socket.on('connect', () => updateState({ status: 'idle', connected: true }));
+socket.on('disconnect', () => updateState({ connected: false }));
 socket.on('connect_error', () => updateState({ connected: false }));
 
 // ── action dispatcher ────────────────────────────────────────────────────────
@@ -87,5 +88,20 @@ chrome.runtime.onMessage.addListener((request) => {
   if (request.action === 'start_reset') {
     updateState({ status: 'running', message: 'Starting...', steps: [], milestones: [] });
     socket.emit('start_reset');
+  }
+
+  if (request.action === 'new_session') {
+    const tabId = getActiveTabId();
+    if (tabId) {
+      chrome.tabs.remove(tabId);
+      setActiveTabId(null);
+    }
+    // Full reset — preserve connected state
+    chrome.storage.local.get(STORAGE_KEY, (result) => {
+      const current = (result[STORAGE_KEY] as { connected?: boolean }) ?? {};
+      chrome.storage.local.set({
+        [STORAGE_KEY]: { status: 'idle', connected: current.connected ?? false },
+      });
+    });
   }
 });
