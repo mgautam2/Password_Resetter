@@ -3,7 +3,13 @@
   "name": "URL Opener",
   "version": "1.0",
   "description": "Open URLs in new tabs",
-  "permissions": ["tabs", "scripting", "activeTab", "sidePanel"],
+  "permissions": ["tabs", "scripting", "activeTab", "sidePanel", "storage"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["dist/content.js"]
+    }
+  ],
   "host_permissions": ["<all_urls>"],
   "action": {
     "default_title": "Open URL"
