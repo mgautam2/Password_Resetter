@@ -1,4 +1,5 @@
 import { readFileSync } from 'fs';
+import chalk from 'chalk';
 import { Socket } from 'socket.io';
 import { generatePassword, SocketEvents } from './utils.js';
 
@@ -11,7 +12,7 @@ export class Runner {
 
   constructor(private socket: Socket) {
     socket.on('dom_result', (dom: string) => {
-      console.log(`[runner] dom received — ${dom.length} chars`);
+      console.info(chalk.redBright(`[DOM LENGTH] — ${dom.length} chars`));
       this.pendingDom?.resolve(dom);
       this.pendingDom = null;
     });
@@ -29,6 +30,11 @@ export class Runner {
     });
   }
 
+  private truncateDom(dom: string, max = 50_000): string {
+    if (dom.length <= max) return dom;
+    return dom.slice(0, max) + `\n<!-- DOM truncated: ${dom.length} → ${max} chars -->`;
+  }
+
   private buildTools(): Record<string, ToolHandler> {
     return {
       read_reset_link: async () => {
@@ -40,8 +46,10 @@ export class Runner {
 
       wait_and_read: async () => {
         this.emit('status', { message: 'Waiting for the page to settle...' });
+        await new Promise(resolve => setTimeout(resolve, 3000));
         this.emit('action', { type: 'read' });
-        return this.waitForDom();
+        const dom = await this.waitForDom();
+        return this.truncateDom(dom);
       },
 
       generate_password: async () => {
@@ -90,7 +98,7 @@ export class Runner {
   async run(name: string, input: ToolInput): Promise<string> {
     const handler = this.tools[name];
     if (!handler) return `unknown tool: ${name}`;
-    console.log(`[runner] ${name}`, input);
+    console.log(chalk.dim(`[runner]`) + ' ' + chalk.yellow(name), chalk.dim(JSON.stringify(input)));
     return handler(input);
   }
 }

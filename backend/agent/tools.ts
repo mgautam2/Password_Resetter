@@ -66,7 +66,7 @@ export const TOOLS: Anthropic.Tool[] = [
   },
   {
     name: 'stuck',
-    description: 'Call this when you cannot proceed — CAPTCHA, 2FA, unexpected page, etc.',
+    description: 'Call this when you truly cannot proceed — 2FA, or anything unrecoverable. Do NOT call for Cloudflare/Turnstile challenge pages; use wait_and_read() repeatedly until they clear.',
     input_schema: {
       type: 'object' as const,
       properties: { reason: str },
