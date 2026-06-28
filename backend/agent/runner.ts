@@ -1,15 +1,9 @@
 import { readFileSync } from 'fs';
 import { Socket } from 'socket.io';
+import { generatePassword, SocketEvents } from './utils.js';
 
 type ToolInput = Record<string, string>;
 type ToolHandler = (input: ToolInput) => Promise<string>;
-
-function generatePassword(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%^&*';
-  let pw = '';
-  for (let i = 0; i < 16; i++) pw += chars[Math.floor(Math.random() * chars.length)];
-  return pw;
-}
 
 export class Runner {
   private pendingDom: { resolve: (dom: string) => void; reject: (err: Error) => void } | null = null;
@@ -17,64 +11,72 @@ export class Runner {
 
   constructor(private socket: Socket) {
     socket.on('dom_result', (dom: string) => {
-      console.log(dom.length)
+      console.log(`[runner] dom received — ${dom.length} chars`);
       this.pendingDom?.resolve(dom);
       this.pendingDom = null;
     });
 
-    const waitForDom = () =>
-      new Promise<string>((resolve, reject) => { this.pendingDom = { resolve, reject }; });
+    this.tools = this.buildTools();
+  }
 
-    const status = (message: string) => socket.emit('status', { message });
-    const milestone = (label: string) => socket.emit('milestone', { label });
+  private emit<E extends keyof SocketEvents>(event: E, payload: SocketEvents[E]) {
+    this.socket.emit(event, payload);
+  }
 
-    this.tools = {
+  private waitForDom(): Promise<string> {
+    return new Promise((resolve, reject) => {
+      this.pendingDom = { resolve, reject };
+    });
+  }
+
+  private buildTools(): Record<string, ToolHandler> {
+    return {
       read_reset_link: async () => {
-        status('Reading reset link...');
+        this.emit('status', { message: 'Reading reset link...' });
         const { url } = JSON.parse(readFileSync('./reset_link.json', 'utf-8'));
-        milestone('Got reset link');
+        this.emit('milestone', { label: 'Got reset link' });
         return url;
       },
 
       wait_and_read: async () => {
-        status('Waiting for the page to settle...');
-        socket.emit('action', { type: 'read' });
-        return waitForDom();
+        this.emit('status', { message: 'Waiting for the page to settle...' });
+        this.emit('action', { type: 'read' });
+        return this.waitForDom();
       },
 
       generate_password: async () => {
-        status('Generating password...');
+        this.emit('status', { message: 'Generating password...' });
         return generatePassword();
       },
 
       navigate: async ({ url }) => {
-        status(`Navigating to ${url}...`);
-        socket.emit('action', { type: 'navigate', url });
-        const dom = await waitForDom();
-        milestone('Page loaded');
+        this.emit('status', { message: `Navigating to ${url}...` });
+        this.emit('action', { type: 'navigate', url });
+        const dom = await this.waitForDom();
+        this.emit('milestone', { label: 'Page loaded' });
         return dom;
       },
 
       click: async ({ selector }) => {
-        status(`Clicking ${selector}...`);
-        socket.emit('action', { type: 'click', selector });
-        return waitForDom();
+        this.emit('status', { message: `Clicking ${selector}...` });
+        this.emit('action', { type: 'click', selector });
+        return this.waitForDom();
       },
 
       fill: async ({ selector, value }) => {
-        status(`Filling ${selector}...`);
-        socket.emit('action', { type: 'fill', selector, value });
-        return waitForDom();
+        this.emit('status', { message: `Filling ${selector}...` });
+        this.emit('action', { type: 'fill', selector, value });
+        return this.waitForDom();
       },
 
       done: async ({ password, message }) => {
-        milestone('Complete');
-        socket.emit('session_done', { password, message });
+        this.emit('milestone', { label: 'Complete' });
+        this.emit('session_done', { password, message });
         return 'done';
       },
 
       stuck: async ({ reason }) => {
-        socket.emit('session_stuck', { reason });
+        this.emit('session_stuck', { reason });
         return 'stuck';
       },
     };

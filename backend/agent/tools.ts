@@ -1,5 +1,10 @@
 import Anthropic from '@anthropic-ai/sdk';
 
+type StringProp  = { type: 'string' };
+type InputSchema = { type: 'object'; properties: Record<string, StringProp>; required: string[] };
+
+const str: StringProp = { type: 'string' };
+
 export const TOOLS: Anthropic.Tool[] = [
   {
     name: 'read_reset_link',
@@ -11,7 +16,7 @@ export const TOOLS: Anthropic.Tool[] = [
     description: 'Navigate the browser to a URL. Returns the page DOM.',
     input_schema: {
       type: 'object' as const,
-      properties: { url: { type: 'string' } },
+      properties: { url: str },
       required: ['url'],
     },
   },
@@ -20,7 +25,7 @@ export const TOOLS: Anthropic.Tool[] = [
     description: 'Click an element by CSS selector. Returns the page DOM after the click.',
     input_schema: {
       type: 'object' as const,
-      properties: { selector: { type: 'string' } },
+      properties: { selector: str },
       required: ['selector'],
     },
   },
@@ -30,8 +35,8 @@ export const TOOLS: Anthropic.Tool[] = [
     input_schema: {
       type: 'object' as const,
       properties: {
-        selector: { type: 'string' },
-        value: { type: 'string' },
+        selector: str,
+        value: str,
       },
       required: ['selector', 'value'],
     },
@@ -53,8 +58,8 @@ export const TOOLS: Anthropic.Tool[] = [
     input_schema: {
       type: 'object' as const,
       properties: {
-        password: { type: 'string' },
-        message: { type: 'string' },
+        password: str,
+        message: str,
       },
       required: ['password', 'message'],
     },
@@ -64,7 +69,7 @@ export const TOOLS: Anthropic.Tool[] = [
     description: 'Call this when you cannot proceed — CAPTCHA, 2FA, unexpected page, etc.',
     input_schema: {
       type: 'object' as const,
-      properties: { reason: { type: 'string' } },
+      properties: { reason: str },
       required: ['reason'],
     },
   },

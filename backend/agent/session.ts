@@ -71,24 +71,22 @@ export class AgentSession {
       if (response.stop_reason !== 'tool_use') break;
 
       const toolResults: Anthropic.ToolResultBlockParam[] = [];
+      let terminal = false;
 
       for (const block of response.content) {
-        if (block.type !== 'tool_use') continue;
+        if (block.type !== 'tool_use') continue; // skip text blocks
 
-        const result = await this.runner.run(
-          block.name,
-          block.input as Record<string, string>
-        );
-
+        const result = await this.runner.run(block.name, block.input as Record<string, string>);
         toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: result });
 
         if (block.name === 'done' || block.name === 'stuck') {
-          messages.push({ role: 'user', content: toolResults });
-          return;
+          terminal = true; // end the session after flushing results
+          break;
         }
       }
 
       messages.push({ role: 'user', content: toolResults });
+      if (terminal) return;
     }
   }
 }
