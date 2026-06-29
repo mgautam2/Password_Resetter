@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { cx } from 'class-variance-authority'
 import type { AgentState } from '../types'
 import { ArcadeMark, IconRefresh, IconGmail } from './icons'
 import { ConnectionLostBanner } from './components/ConnectionLostBanner'
@@ -50,36 +51,30 @@ export default function Popup() {
   const needsGmailAuth = state.gmailAuthorized === false
 
   return (
-    <div className="w-80 flex flex-col" style={{ background: 'var(--bg)' }}>
+    <div className="w-80 flex flex-col bg-[var(--bg)]">
 
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: 'var(--accent)', color: 'var(--bg)' }}>
+          <div className="w-6 h-6 rounded-md flex items-center justify-center bg-[var(--accent)] text-[var(--bg)]">
             <ArcadeMark />
           </div>
-          <span className="text-base font-semibold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-            Arcade
+          <span className="text-base font-semibold tracking-tight text-[var(--text-primary)]">
+            Locksmythe
           </span>
         </div>
         <div className="flex items-center gap-2">
           <span
-            className="w-1.5 h-1.5 rounded-full"
-            style={{
-              background: state.connected ? '#10b981' : '#ef4444',
-              animation: state.connected ? 'record-pulse 2.5s ease-in-out infinite' : undefined,
-            }}
+            className={cx('w-1.5 h-1.5 rounded-full', state.connected ? 'bg-emerald-500' : 'bg-red-500')}
+            style={state.connected ? { animation: 'record-pulse 2.5s ease-in-out infinite' } : undefined}
           />
-          <span className="text-sm" style={{ color: isOffline ? '#dc2626' : 'var(--text-muted)' }}>
+          <span className={cx('text-sm', isOffline ? 'text-red-600' : 'text-[var(--text-muted)]')}>
             {state.connected ? 'Connected' : 'Offline'}
           </span>
           <button
             onClick={newSession}
             title="Fresh session"
-            className="w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-150"
-            style={{ color: 'var(--text-muted)', background: 'transparent' }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+            className="w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-150 text-[var(--text-muted)] hover:bg-[var(--surface)]"
           >
             <IconRefresh />
           </button>
@@ -92,7 +87,7 @@ export default function Popup() {
         {lostConnection && <ConnectionLostBanner />}
 
         {state.status === 'idle' && !lostConnection && !needsGmailAuth && (
-          <p className="text-sm text-center py-2" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-sm text-center py-2 text-[var(--text-muted)]">
             {isOffline ? 'Waiting for backend…' : 'Ready to reset a password'}
           </p>
         )}
@@ -108,32 +103,29 @@ export default function Popup() {
         {state.status === 'success' && state.password && <PasswordCard password={state.password} />}
 
         {!isTerminal && !lostConnection && needsGmailAuth && (
-          <div
-            className="rounded-xl p-4 flex flex-col gap-3"
-            style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
-          >
+          <div className="rounded-xl p-4 flex flex-col gap-3 bg-[var(--surface)] border border-[var(--border)]">
             <div className="flex items-start gap-3">
               <div className="mt-0.5 shrink-0">
                 <IconGmail />
               </div>
               <div>
-                <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                <p className="text-sm font-semibold text-[var(--text-primary)]">
                   Connect Gmail
                 </p>
-                <p className="text-xs mt-0.5 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-                  Arcade will search your inbox for the reset email and extract the link automatically.
+                <p className="text-xs mt-0.5 leading-relaxed text-[var(--text-muted)]">
+                  Locksmythe will search your inbox for the reset email and extract the link automatically.
                 </p>
               </div>
             </div>
             <button
               onClick={connectGmail}
               disabled={isOffline}
-              className="w-full py-2 rounded-lg text-sm font-semibold transition-all duration-150 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              style={
+              className={cx(
+                'w-full py-2 rounded-lg text-sm font-semibold transition-all duration-150 disabled:cursor-not-allowed flex items-center justify-center gap-2',
                 isOffline
-                  ? { background: 'var(--border)', color: 'var(--text-muted)', cursor: 'not-allowed' }
-                  : { background: 'var(--text-primary)', color: '#FAF9F7' }
-              }
+                  ? 'bg-[var(--border)] text-[var(--text-muted)]'
+                  : 'bg-[var(--text-primary)] text-[#FAF9F7]',
+              )}
             >
               Authorise with Google
             </button>
@@ -154,7 +146,7 @@ export default function Popup() {
                     animation: 'shimmer 1.6s linear infinite',
                   }
                 : ctaDisabled
-                ? { background: 'var(--border)', color: 'var(--text-muted)', cursor: 'not-allowed' }
+                ? { background: 'var(--border)', color: 'var(--text-muted)' }
                 : { background: 'var(--text-primary)', color: '#FAF9F7' }
             }
           >

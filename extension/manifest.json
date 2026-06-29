@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "URL Opener",
+  "name": "Locksmythe",
   "version": "1.0",
-  "description": "Open URLs in new tabs",
+  "description": "AI agent that automates password resets end-to-end",
   "permissions": ["tabs", "scripting", "activeTab", "sidePanel", "storage"],
   "content_scripts": [
     {
@@ -12,7 +12,7 @@
   ],
   "host_permissions": ["<all_urls>"],
   "action": {
-    "default_title": "Open URL"
+    "default_title": "Locksmythe"
   },
   "side_panel": {
     "default_path": "dist/src/popup/index.html"
