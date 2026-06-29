@@ -21,9 +21,13 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
     const el = document.querySelector(request.selector) as HTMLInputElement;
     if (!el) return sendResponse(`ERROR: selector not found: ${request.selector}`);
     el.focus();
-    el.value = request.value;
-    el.dispatchEvent(new Event('input', { bubbles: true }));
+    // Use the native setter so React/Vue controlled inputs pick up the change.
+    const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
+    if (nativeSetter) nativeSetter.call(el, request.value);
+    else el.value = request.value;
+    el.dispatchEvent(new InputEvent('input', { bubbles: true, data: request.value }));
     el.dispatchEvent(new Event('change', { bubbles: true }));
+    el.dispatchEvent(new Event('blur', { bubbles: true }));
     settle().then(() => sendResponse(snapshot()));
     return true;
   }

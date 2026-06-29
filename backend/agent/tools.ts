@@ -7,9 +7,18 @@ const str: StringProp = { type: 'string' };
 
 export const TOOLS: Anthropic.Tool[] = [
   {
-    name: 'read_reset_link',
-    description: 'Get the password reset URL from the email inbox',
+    name: 'check_inbox',
+    description: 'Search Gmail for a password-reset email received around now. Returns matching emails as JSON, or a retry message if none found yet.',
     input_schema: { type: 'object' as const, properties: {}, required: [] },
+  },
+  {
+    name: 'wait',
+    description: 'Wait N seconds before retrying check_inbox.',
+    input_schema: {
+      type: 'object' as const,
+      properties: { seconds: str },
+      required: ['seconds'],
+    },
   },
   {
     name: 'navigate',

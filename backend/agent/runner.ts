@@ -1,7 +1,7 @@
-import { readFileSync } from 'fs';
 import chalk from 'chalk';
 import { Socket } from 'socket.io';
 import { generatePassword, SocketEvents } from './utils.js';
+import { listEmailsByHeader } from './arcade.js';
 
 type ToolInput = Record<string, string>;
 type ToolHandler = (input: ToolInput) => Promise<string>;
@@ -9,6 +9,8 @@ type ToolHandler = (input: ToolInput) => Promise<string>;
 export class Runner {
   private pendingDom: { resolve: (dom: string) => void; reject: (err: Error) => void } | null = null;
   private tools: Record<string, ToolHandler>;
+  private sessionStartedAt = Date.now();
+  private inboxAttempts = 0;
 
   constructor(private socket: Socket) {
     socket.on('dom_result', (dom: string) => {
@@ -37,11 +39,26 @@ export class Runner {
 
   private buildTools(): Record<string, ToolHandler> {
     return {
-      read_reset_link: async () => {
-        this.emit('status', { message: 'Reading reset link...' });
-        const { url } = JSON.parse(readFileSync('./reset_link.json', 'utf-8'));
-        this.emit('milestone', { label: 'Got reset link' });
-        return url;
+      check_inbox: async () => {
+        this.emit('status', { message: 'Checking inbox…' });
+        this.inboxAttempts++;
+        const emails = await listEmailsByHeader();
+        const floor = this.sessionStartedAt - 2 * 60 * 1000;
+        const parseDate = (d: string) => new Date(String(d ?? '').replace(' at ', ' ')).getTime();
+        const recent = emails.filter((e: any) => parseDate(e.date) >= floor);
+        console.log(chalk.green("[inbox]"), `${recent.length}/${emails.length} email(s) in window`);
+        if (recent.length > 0) {
+          return JSON.stringify(recent.map((e: any) => ({ from: e.from_ ?? e.from, subject: e.subject, date: e.date, body: e.body ?? e.snippet, html_body: e.html_body })));
+        }
+        if (this.inboxAttempts >= 5) return 'Max attempts reached. Call stuck().';
+        return `No emails yet. Attempt ${this.inboxAttempts}/5. Call wait({ seconds: "30" }) then check_inbox again.`;
+      },
+
+      wait: async ({ seconds }) => {
+        const ms = parseInt(seconds, 10) * 1000;
+        this.emit('status', { message: `Waiting ${seconds}s for email…` });
+        await new Promise(r => setTimeout(r, ms));
+        return 'Done waiting. Call check_inbox again.';
       },
 
       wait_and_read: async () => {
