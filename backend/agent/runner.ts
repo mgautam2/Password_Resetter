@@ -48,6 +48,7 @@ export class Runner {
         const recent = emails.filter((e: any) => parseDate(e.date) >= floor);
         console.log(chalk.green("[inbox]"), `${recent.length}/${emails.length} email(s) in window`);
         if (recent.length > 0) {
+          this.emit('milestone', { label: 'Got email' });
           return JSON.stringify(recent.map((e: any) => ({ from: e.from_ ?? e.from, subject: e.subject, date: e.date, body: e.body ?? e.snippet, html_body: e.html_body })));
         }
         if (this.inboxAttempts >= 5) return 'Max attempts reached. Call stuck().';
@@ -75,6 +76,7 @@ export class Runner {
       },
 
       navigate: async ({ url }) => {
+        this.emit('milestone', { label: 'Got email' });
         this.emit('status', { message: `Navigating to ${url}...` });
         this.emit('action', { type: 'navigate', url });
         const dom = await this.waitForDom();
@@ -95,7 +97,7 @@ export class Runner {
       },
 
       done: async ({ password, message }) => {
-        this.emit('milestone', { label: 'Complete' });
+        this.emit('milestone', { label: 'Password reset' });
         this.emit('session_done', { password, message });
         return 'done';
       },
