@@ -7,6 +7,7 @@ export interface AgentState {
   steps?: string[];
   milestones?: string[];
   connected?: boolean;
+  gmailAuthorized?: boolean;
 }
 
 export type Action =

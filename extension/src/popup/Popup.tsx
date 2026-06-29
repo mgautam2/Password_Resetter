@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { AgentState } from '../types'
-import { ArcadeMark, IconRefresh } from './icons'
+import { ArcadeMark, IconRefresh, IconGmail } from './icons'
 import { ConnectionLostBanner } from './components/ConnectionLostBanner'
 import { LiveStatusCard } from './components/LiveStatusCard'
 import { MilestoneList } from './components/MilestoneList'
@@ -39,6 +39,7 @@ export default function Popup() {
 
   const startReset = () => chrome.runtime.sendMessage({ action: 'start_reset' })
   const newSession = () => chrome.runtime.sendMessage({ action: 'new_session' })
+  const connectGmail = () => chrome.runtime.sendMessage({ action: 'authorize_gmail' })
 
   const milestones = state.milestones ?? []
   const isRunning = state.status === 'running'
@@ -46,6 +47,7 @@ export default function Popup() {
   const isOffline = !state.connected
   const lostConnection = isOffline && (milestones.length > 0 || !!state.message)
   const ctaDisabled = isRunning || isOffline
+  const gmailAuthorized = state.gmailAuthorized === true
 
   return (
     <div className="w-80 flex flex-col" style={{ background: 'var(--bg)' }}>
@@ -89,7 +91,7 @@ export default function Popup() {
 
         {lostConnection && <ConnectionLostBanner />}
 
-        {state.status === 'idle' && !lostConnection && (
+        {state.status === 'idle' && !lostConnection && gmailAuthorized && (
           <p className="text-sm text-center py-2" style={{ color: 'var(--text-muted)' }}>
             {isOffline ? 'Waiting for backend…' : 'Ready to reset a password'}
           </p>
@@ -105,7 +107,40 @@ export default function Popup() {
 
         {state.status === 'success' && state.password && <PasswordCard password={state.password} />}
 
-        {!isTerminal && !lostConnection && (
+        {!isTerminal && !lostConnection && !gmailAuthorized && (
+          <div
+            className="rounded-xl p-4 flex flex-col gap-3"
+            style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+          >
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 shrink-0">
+                <IconGmail />
+              </div>
+              <div>
+                <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  Connect Gmail
+                </p>
+                <p className="text-xs mt-0.5 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+                  Arcade will search your inbox for the reset email and extract the link automatically.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={connectGmail}
+              disabled={isOffline}
+              className="w-full py-2 rounded-lg text-sm font-semibold transition-all duration-150 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              style={
+                isOffline
+                  ? { background: 'var(--border)', color: 'var(--text-muted)', cursor: 'not-allowed' }
+                  : { background: 'var(--text-primary)', color: '#FAF9F7' }
+              }
+            >
+              Authorise with Google
+            </button>
+          </div>
+        )}
+
+        {!isTerminal && !lostConnection && gmailAuthorized && (
           <button
             onClick={startReset}
             disabled={ctaDisabled}

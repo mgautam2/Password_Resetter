@@ -11,6 +11,9 @@ chrome.storage.local.remove(STORAGE_KEY);
 // MV3 service workers lack XMLHttpRequest — force WebSocket transport.
 const socket = io(BACKEND_URL, { autoConnect: false, transports: ['websocket'] });
 
+// Set to true only when the user explicitly clicks "Connect Gmail"
+let authTabRequested = false;
+
 // ── socket lifecycle ─────────────────────────────────────────────────────────
 
 socket.on('connect', () => updateState({ status: 'idle', connected: true }));
@@ -58,6 +61,17 @@ socket.on('milestone', ({ label }: { label: string }) => {
   appendToState('milestones', label);
 });
 
+// ── gmail auth ───────────────────────────────────────────────────────────────
+
+socket.on('auth_status', ({ authorized, url }: { authorized: boolean; url?: string }) => {
+  updateState({ gmailAuthorized: authorized });
+  // Only open the OAuth tab if the user explicitly clicked "Connect Gmail"
+  if (!authorized && url && authTabRequested) {
+    authTabRequested = false;
+    chrome.tabs.create({ url });
+  }
+});
+
 // ── session terminal events ──────────────────────────────────────────────────
 
 socket.on('session_done', ({ password, message }: { password: string; message: string }) => {
@@ -90,17 +104,22 @@ chrome.runtime.onMessage.addListener((request) => {
     socket.emit('start_reset');
   }
 
+  if (request.action === 'authorize_gmail') {
+    authTabRequested = true;
+    socket.emit('authorize_gmail');
+  }
+
   if (request.action === 'new_session') {
     const tabId = getActiveTabId();
     if (tabId) {
       chrome.tabs.remove(tabId);
       setActiveTabId(null);
     }
-    // Full reset — preserve connected state
+    // Full reset — preserve connected + auth state
     chrome.storage.local.get(STORAGE_KEY, (result) => {
-      const current = (result[STORAGE_KEY] as { connected?: boolean }) ?? {};
+      const current = (result[STORAGE_KEY] as { connected?: boolean; gmailAuthorized?: boolean }) ?? {};
       chrome.storage.local.set({
-        [STORAGE_KEY]: { status: 'idle', connected: current.connected ?? false },
+        [STORAGE_KEY]: { status: 'idle', connected: current.connected ?? false, gmailAuthorized: current.gmailAuthorized ?? false },
       });
     });
   }

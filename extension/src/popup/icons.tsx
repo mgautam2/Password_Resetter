@@ -64,6 +64,18 @@ export function IconEyeOff() {
   )
 }
 
+export function IconGmail() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 48 48">
+      <path fill="#EA4335" d="M6 40h6V23.8L4 17.8V38c0 1.1.9 2 2 2z"/>
+      <path fill="#34A853" d="M36 40h6c1.1 0 2-.9 2-2V17.8l-8 6z"/>
+      <path fill="#FBBC05" d="M36 10v13.8l8-6V12c0-2.5-2.8-3.9-4.8-2.4z"/>
+      <path fill="#4285F4" d="M12 23.8V10l12 9 12-9v13.8L24 32.8z"/>
+      <path fill="#C5221F" d="M4 12v5.8l8 6V10L9.8 8.6C7.8 7.1 4 8.5 4 11v1z"/>
+    </svg>
+  )
+}
+
 export function ArcadeMark() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
