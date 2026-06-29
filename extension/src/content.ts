@@ -1,11 +1,20 @@
 import { snapshot } from './snapshot';
 
-// Give SPA content (e.g. a reset modal) a moment to mount before we read.
-const settle = () => new Promise((r) => setTimeout(r, 800));
+// Wait until the DOM stops mutating for `quiet` ms, or until `max` ms elapses.
+const waitForSettle = (quiet = 300, max = 3000): Promise<void> =>
+  new Promise((resolve) => {
+    let timer: ReturnType<typeof setTimeout>;
+    const done = () => { observer.disconnect(); clearTimeout(timer); resolve(); };
+    const reset = () => { clearTimeout(timer); timer = setTimeout(done, quiet); };
+    const observer = new MutationObserver(reset);
+    observer.observe(document.body, { subtree: true, childList: true, attributes: true });
+    reset();
+    setTimeout(done, max);
+  });
 
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
   if (request.action === 'getDOM') {
-    settle().then(() => sendResponse(snapshot()));
+    waitForSettle().then(() => sendResponse(snapshot()));
     return true;
   }
 
@@ -13,7 +22,7 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
     const el = document.querySelector(request.selector);
     if (!el) return sendResponse(`ERROR: selector not found: ${request.selector}`);
     (el as HTMLElement).click();
-    settle().then(() => sendResponse(snapshot()));
+    waitForSettle().then(() => sendResponse(snapshot()));
     return true;
   }
 
@@ -28,7 +37,7 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
     el.dispatchEvent(new InputEvent('input', { bubbles: true, data: request.value }));
     el.dispatchEvent(new Event('change', { bubbles: true }));
     el.dispatchEvent(new Event('blur', { bubbles: true }));
-    settle().then(() => sendResponse(snapshot()));
+    waitForSettle().then(() => sendResponse(snapshot()));
     return true;
   }
 
