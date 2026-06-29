@@ -47,7 +47,7 @@ export default function Popup() {
   const isOffline = !state.connected
   const lostConnection = isOffline && (milestones.length > 0 || !!state.message)
   const ctaDisabled = isRunning || isOffline
-  const gmailAuthorized = state.gmailAuthorized === true
+  const needsGmailAuth = state.gmailAuthorized === false
 
   return (
     <div className="w-80 flex flex-col" style={{ background: 'var(--bg)' }}>
@@ -91,7 +91,7 @@ export default function Popup() {
 
         {lostConnection && <ConnectionLostBanner />}
 
-        {state.status === 'idle' && !lostConnection && gmailAuthorized && (
+        {state.status === 'idle' && !lostConnection && !needsGmailAuth && (
           <p className="text-sm text-center py-2" style={{ color: 'var(--text-muted)' }}>
             {isOffline ? 'Waiting for backend…' : 'Ready to reset a password'}
           </p>
@@ -107,7 +107,7 @@ export default function Popup() {
 
         {state.status === 'success' && state.password && <PasswordCard password={state.password} />}
 
-        {!isTerminal && !lostConnection && !gmailAuthorized && (
+        {!isTerminal && !lostConnection && needsGmailAuth && (
           <div
             className="rounded-xl p-4 flex flex-col gap-3"
             style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
@@ -140,7 +140,7 @@ export default function Popup() {
           </div>
         )}
 
-        {!isTerminal && !lostConnection && gmailAuthorized && (
+        {!isTerminal && !lostConnection && !needsGmailAuth && (
           <button
             onClick={startReset}
             disabled={ctaDisabled}
