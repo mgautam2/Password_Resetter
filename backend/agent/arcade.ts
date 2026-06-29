@@ -1,6 +1,6 @@
 import Arcade from '@arcadeai/arcadejs';
 
-export const ARCADE_USER_ID = 'mrinaldavis2@gmail.com';
+export const ARCADE_USER_ID = process.env.ARCADE_USER_ID!;
 
 const client = new Arcade({ apiKey: process.env.ARCADE_API_KEY });
 
