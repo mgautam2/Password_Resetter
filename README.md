@@ -58,7 +58,7 @@ Create `backend/.env` with your keys:
 ```bash
 ANTHROPIC_API_KEY=sk-ant-...
 ARCADE_API_KEY=arc_...
-# PORT=4000          # optional, defaults to 4000
+EMAIL=....
 ```
 
 > The fixed Gmail user is hardcoded in `backend/agent/arcade.ts`
@@ -80,7 +80,7 @@ npm install
 npm run build      # outputs to extension/dist/
 ```
 
-Load it into Chrome:
+*Load it into Chrome:*
 
 1. Open `chrome://extensions`
 2. Enable **Developer mode** (top right)
